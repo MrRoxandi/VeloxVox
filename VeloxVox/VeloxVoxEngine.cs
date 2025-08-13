@@ -87,6 +87,19 @@ public sealed class VeloxVoxEngine : IAsyncDisposable
     }
 
     /// <summary>
+    /// Enqueues an audio stream from a network URL for playback.
+    /// Supported formats depend on the LibVLC backend (e.g., HTTP streams, direct links to MP3/WAV/etc.).
+    /// </summary>
+    /// <param name="url">The absolute URL of the audio stream.</param>
+    /// <exception cref="ArgumentException">Thrown if the URL is not a valid absolute URI.</exception>
+    public void EnqueueUrl(string url)
+    {
+        var audioItem = AudioItem.FromUrl(url); // Validation happens inside FromUrl
+        _queue.Enqueue(audioItem);
+        _pulse.Set(); // Signal the pump to check the queue.
+    }
+
+    /// <summary>
     /// Synthesizes text to speech and enqueues the resulting audio for playback.
     /// </summary>
     /// <param name="text">The text to synthesize.</param>

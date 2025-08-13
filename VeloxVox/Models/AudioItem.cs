@@ -21,4 +21,19 @@ public sealed record AudioItem(string SourcePath, bool IsTemporaryFile)
     /// <param name="path">The path to the temporary audio file.</param>
     /// <returns>A new AudioItem instance.</returns>
     public static AudioItem FromTempFile(string path) => new(path, true);
+
+    /// <summary>
+    /// Creates an AudioItem from a network URL (e.g., HTTP stream or direct link to an audio file).
+    /// </summary>
+    /// <param name="url">The URL of the audio stream.</param>
+    /// <returns>A new AudioItem instance.</returns>
+    /// <exception cref="ArgumentException">Thrown if the provided string is not a valid, absolute URL.</exception>
+    public static AudioItem FromUrl(string url)
+    {
+        if (!Uri.TryCreate(url, UriKind.Absolute, out _))
+        {
+            throw new ArgumentException($"The provided string is not a valid absolute URL: {url}", nameof(url));
+        }
+        return new(url, false);
+    }
 }
