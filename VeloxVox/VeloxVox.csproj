@@ -1,10 +1,39 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFrameworks>net8.0-windows;net9.0-windows</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
+    <Title>VeloxVox</Title>
+    <SignAssembly>False</SignAssembly>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Version>1.0.0</Version>
+    <Authors>Roxandi</Authors>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Description>VeloxVox is a high-performance, modern audio playback and Text-To-Speech (TTS) engine for .NET on Windows. Built on the robust foundations of LibVLCSharp and System.Speech, it's designed for speed, responsiveness, and a simple, intuitive API.</Description>
+    <PackageTags>audio;sound;playback;music;tts;text-to-speech;speech synthesis;vlc;libvlc;windows;async</PackageTags>
+    <RepositoryUrl>https://github.com/MrRoxandi/VeloxVox</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/MrRoxandi/VeloxVox</PackageProjectUrl>
+    <PackageReleaseNotes>1.0.0 init release</PackageReleaseNotes>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
   </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net9.0-windows|AnyCPU'">
+    <WarningLevel>8</WarningLevel>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net9.0-windows|AnyCPU'">
+    <WarningLevel>8</WarningLevel>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="LibVLCSharp" Version="3.9.4" />
