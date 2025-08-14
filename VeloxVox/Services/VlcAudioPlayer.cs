@@ -5,28 +5,28 @@ using VeloxVox.Models;
 namespace VeloxVox.Services;
 
 /// <summary>
-/// An audio player implementation using LibVLCSharp, configured for audio-only (headless) playback.
+///     An audio player implementation using LibVLCSharp, configured for audio-only (headless) playback.
 /// </summary>
 internal sealed class VlcAudioPlayer : IAudioPlayer
 {
     private LibVLC? _vlc;
     private MediaPlayer? _mediaPlayer;
-    private volatile bool _isEventTriggered = false;
+    private volatile bool _isEventTriggered;
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public event AsyncEventHandler<PlaybackCompletedEventArgs>? PlaybackCompleted;
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public event AsyncEventHandler<PlaybackErrorEventArgs>? PlaybackError;
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public PlaybackState State { get; private set; } = PlaybackState.Idle;
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public AudioItem? CurrentItem { get; private set; }
 
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public ValueTask InitializeAsync(CancellationToken ct = default)
     {
         Core.Initialize();
@@ -38,13 +38,13 @@ internal sealed class VlcAudioPlayer : IAudioPlayer
         // --vout=dummy: Uses a dummy video output, which does nothing.
         // This guarantees that no window will ever be created, even if a video file is played.
         // ============================================================================
-        var vlcOptions = new string[]
+        var vlcOptions = new[]
         {
             "--no-video",
             "--vout=dummy"
         };
 
-        _vlc = new LibVLC(enableDebugLogs: false, vlcOptions);
+        _vlc = new LibVLC(false, vlcOptions);
         _mediaPlayer = new MediaPlayer(_vlc);
 
         _mediaPlayer.EndReached += OnEndReached;
@@ -53,7 +53,7 @@ internal sealed class VlcAudioPlayer : IAudioPlayer
         return ValueTask.CompletedTask;
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public ValueTask PlayAsync(AudioItem item, CancellationToken ct = default)
     {
         if (_mediaPlayer is null || _vlc is null)
@@ -75,24 +75,29 @@ internal sealed class VlcAudioPlayer : IAudioPlayer
             // Fire the error event asynchronously without awaiting
             _ = PlaybackError?.Invoke(this, new PlaybackErrorEventArgs(item, ex));
         }
+
         return ValueTask.CompletedTask;
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public ValueTask StopAsync(CancellationToken ct = default)
     {
-        if (_mediaPlayer is null || State == PlaybackState.Idle)
-        {
-            return ValueTask.CompletedTask;
-        }
+        if (_mediaPlayer is null || State == PlaybackState.Idle) return ValueTask.CompletedTask;
 
         State = PlaybackState.Stopping;
         _mediaPlayer.Stop(); // This will trigger the OnStopped event
         return ValueTask.CompletedTask;
     }
 
-    private void OnEndReached(object? sender, EventArgs e) => HandlePlaybackEnd(CompletionReason.Finished);
-    private void OnStopped(object? sender, EventArgs e) => HandlePlaybackEnd(CompletionReason.Skipped);
+    private void OnEndReached(object? sender, EventArgs e)
+    {
+        HandlePlaybackEnd(CompletionReason.Finished);
+    }
+
+    private void OnStopped(object? sender, EventArgs e)
+    {
+        HandlePlaybackEnd(CompletionReason.Skipped);
+    }
 
     private void HandlePlaybackEnd(CompletionReason reason)
     {
@@ -107,10 +112,7 @@ internal sealed class VlcAudioPlayer : IAudioPlayer
 
         _ = PlaybackCompleted?.Invoke(this, new PlaybackCompletedEventArgs(item, reason));
 
-        if (item.IsTemporaryFile)
-        {
-            TryDeleteTempFile(item.SourcePath);
-        }
+        if (item.IsTemporaryFile) TryDeleteTempFile(item.SourcePath);
     }
 
     private void OnEncounteredError(object? sender, EventArgs e)
@@ -128,13 +130,10 @@ internal sealed class VlcAudioPlayer : IAudioPlayer
 
         _ = PlaybackError?.Invoke(this, new PlaybackErrorEventArgs(item, ex));
 
-        if (item.IsTemporaryFile)
-        {
-            TryDeleteTempFile(item.SourcePath);
-        }
+        if (item.IsTemporaryFile) TryDeleteTempFile(item.SourcePath);
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async ValueTask DisposeAsync()
     {
         if (_mediaPlayer != null)
@@ -149,6 +148,7 @@ internal sealed class VlcAudioPlayer : IAudioPlayer
                 await Task.Delay(100); // Give it a moment to stop
             }
         }
+
         _mediaPlayer?.Dispose();
         _vlc?.Dispose();
         _mediaPlayer = null;
@@ -159,11 +159,11 @@ internal sealed class VlcAudioPlayer : IAudioPlayer
     {
         try
         {
-            if (File.Exists(path))
-            {
-                File.Delete(path);
-            }
+            if (File.Exists(path)) File.Delete(path);
         }
-        catch {}
+        catch
+        {
+            // ignored
+        }
     }
 }

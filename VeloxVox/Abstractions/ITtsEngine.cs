@@ -3,12 +3,12 @@
 namespace VeloxVox.Abstractions;
 
 /// <summary>
-/// Defines the contract for a Text-To-Speech (TTS) synthesis engine.
+///     Defines the contract for a Text-To-Speech (TTS) synthesis engine.
 /// </summary>
 public interface ITtsEngine : IAsyncDisposable
 {
     /// <summary>
-    /// Synthesizes the given text to a temporary audio file asynchronously.
+    ///     Synthesizes the given text to a temporary audio file asynchronously.
     /// </summary>
     /// <param name="text">The text to synthesize.</param>
     /// <param name="options">The TTS options (voice, rate, volume).</param>

@@ -6,8 +6,8 @@ using VeloxVox.Services;
 namespace VeloxVox;
 
 /// <summary>
-/// The main orchestration engine for VeloxVox. Manages the audio queue,
-/// playback, and TTS synthesis. Create instances using <see cref="VeloxVoxBuilder"/>.
+///     The main orchestration engine for VeloxVox. Manages the audio queue,
+///     playback, and TTS synthesis. Create instances using <see cref="VeloxVoxBuilder" />.
 /// </summary>
 [SupportedOSPlatform("windows")]
 public sealed class VeloxVoxEngine : IAsyncDisposable
@@ -20,22 +20,22 @@ public sealed class VeloxVoxEngine : IAsyncDisposable
     private readonly Task _playbackPumpTask;
 
     /// <summary>
-    /// Fired when a new item from the queue begins to play.
+    ///     Fired when a new item from the queue begins to play.
     /// </summary>
     public event EventHandler<QueueItemStartedEventArgs>? QueueItemStarted;
 
     /// <summary>
-    /// Fired when an item finishes playing, is skipped, or the engine shuts down.
+    ///     Fired when an item finishes playing, is skipped, or the engine shuts down.
     /// </summary>
     public event EventHandler<QueueItemCompletedEventArgs>? QueueItemCompleted;
 
     /// <summary>
-    /// Fired when an error occurs during an item's playback.
+    ///     Fired when an error occurs during an item's playback.
     /// </summary>
     public event EventHandler<QueueItemFailedEventArgs>? QueueItemFailed;
 
     /// <summary>
-    /// Fired when the queue becomes empty and the last item has finished playing.
+    ///     Fired when the queue becomes empty and the last item has finished playing.
     /// </summary>
     public event EventHandler<QueueEmptyEventArgs>? QueueEmpty;
 
@@ -57,22 +57,22 @@ public sealed class VeloxVoxEngine : IAsyncDisposable
     }
 
     /// <summary>
-    /// Gets the number of items currently in the playback queue.
+    ///     Gets the number of items currently in the playback queue.
     /// </summary>
     public int QueueLength => _queue.Count;
 
     /// <summary>
-    /// Gets the current playback state of the audio player.
+    ///     Gets the current playback state of the audio player.
     /// </summary>
     public PlaybackState PlaybackState => _player.State;
 
     /// <summary>
-    /// Gets the audio item that is currently playing.
+    ///     Gets the audio item that is currently playing.
     /// </summary>
     public AudioItem? CurrentItem => _player.CurrentItem;
 
     /// <summary>
-    /// Enqueues a local audio file for playback.
+    ///     Enqueues a local audio file for playback.
     /// </summary>
     /// <param name="filePath">The full path to the audio file.</param>
     public void EnqueueFile(string filePath)
@@ -87,8 +87,8 @@ public sealed class VeloxVoxEngine : IAsyncDisposable
     }
 
     /// <summary>
-    /// Enqueues an audio stream from a network URL for playback.
-    /// Supported formats depend on the LibVLC backend (e.g., HTTP streams, direct links to MP3/WAV/etc.).
+    ///     Enqueues an audio stream from a network URL for playback.
+    ///     Supported formats depend on the LibVLC backend (e.g., HTTP streams, direct links to MP3/WAV/etc.).
     /// </summary>
     /// <param name="url">The absolute URL of the audio stream.</param>
     /// <exception cref="ArgumentException">Thrown if the URL is not a valid absolute URI.</exception>
@@ -100,7 +100,7 @@ public sealed class VeloxVoxEngine : IAsyncDisposable
     }
 
     /// <summary>
-    /// Synthesizes text to speech and enqueues the resulting audio for playback.
+    ///     Synthesizes text to speech and enqueues the resulting audio for playback.
     /// </summary>
     /// <param name="text">The text to synthesize.</param>
     /// <param name="options">Optional TTS settings. If null, defaults will be used.</param>
@@ -121,19 +121,17 @@ public sealed class VeloxVoxEngine : IAsyncDisposable
     }
 
     /// <summary>
-    /// Stops the currently playing audio item. The queue will then proceed to the next item.
-    /// This is equivalent to skipping the current item.
+    ///     Stops the currently playing audio item. The queue will then proceed to the next item.
+    ///     This is equivalent to skipping the current item.
     /// </summary>
     public async ValueTask SkipCurrentAsync()
     {
         if (_player.State is PlaybackState.Playing or PlaybackState.Stopping)
-        {
             await _player.StopAsync(_engineCts.Token).ConfigureAwait(false);
-        }
     }
 
     /// <summary>
-    /// Clears all items from the playback queue. Does not stop the currently playing item.
+    ///     Clears all items from the playback queue. Does not stop the currently playing item.
     /// </summary>
     public void ClearQueue()
     {
@@ -143,7 +141,6 @@ public sealed class VeloxVoxEngine : IAsyncDisposable
     private async Task PlaybackPumpLoopAsync()
     {
         while (!_engineCts.IsCancellationRequested)
-        {
             try
             {
                 await _pulse.WaitAsync(_engineCts.Token).ConfigureAwait(false);
@@ -171,12 +168,11 @@ public sealed class VeloxVoxEngine : IAsyncDisposable
                 // This is the expected way to exit the loop.
                 break;
             }
-            catch 
+            catch
             {
                 // Avoid a tight spin-loop on repeated errors.
                 await Task.Delay(500, CancellationToken.None).ConfigureAwait(false);
             }
-        }
     }
 
     private Task OnPlayerPlaybackCompleted(object sender, PlaybackCompletedEventArgs e)
@@ -198,22 +194,16 @@ public sealed class VeloxVoxEngine : IAsyncDisposable
     private void CheckIfQueueIsEmpty()
     {
         if (_queue.Count == 0 && _player.State == PlaybackState.Idle)
-        {
             QueueEmpty?.Invoke(this, new QueueEmptyEventArgs());
-        }
     }
 
     /// <summary>
-    /// Shuts down the engine, stops playback, and releases all resources.
+    ///     Shuts down the engine, stops playback, and releases all resources.
     /// </summary>
     public async ValueTask DisposeAsync()
     {
-
         // 1. Signal cancellation to all operations
-        if (!_engineCts.IsCancellationRequested)
-        {
-            _engineCts.Cancel();
-        }
+        if (!_engineCts.IsCancellationRequested) await _engineCts.CancelAsync();
 
         // 2. Unblock the pump task so it can exit
         _pulse.Set();
@@ -223,8 +213,14 @@ public sealed class VeloxVoxEngine : IAsyncDisposable
         {
             await _playbackPumpTask.ConfigureAwait(false);
         }
-        catch (OperationCanceledException) { /* Expected */ }
-        catch {}
+        catch (OperationCanceledException)
+        {
+            /* Expected */
+        }
+        catch
+        {
+            // ignored
+        }
 
         // 4. Dispose managed resources
         await _player.DisposeAsync().ConfigureAwait(false);
@@ -236,8 +232,8 @@ public sealed class VeloxVoxEngine : IAsyncDisposable
 }
 
 /// <summary>
-/// A builder for creating and configuring a <see cref="VeloxVoxEngine"/> instance.
-/// This provides a fluent API for setting up the engine with custom or default components.
+///     A builder for creating and configuring a <see cref="VeloxVoxEngine" /> instance.
+///     This provides a fluent API for setting up the engine with custom or default components.
 /// </summary>
 [SupportedOSPlatform("windows")]
 public sealed class VeloxVoxBuilder
@@ -247,7 +243,7 @@ public sealed class VeloxVoxBuilder
     private IAudioQueue? _audioQueue;
 
     /// <summary>
-    /// Specifies a custom audio player backend.
+    ///     Specifies a custom audio player backend.
     /// </summary>
     public VeloxVoxBuilder WithAudioPlayer(IAudioPlayer audioPlayer)
     {
@@ -256,7 +252,7 @@ public sealed class VeloxVoxBuilder
     }
 
     /// <summary>
-    /// Specifies a custom Text-To-Speech engine.
+    ///     Specifies a custom Text-To-Speech engine.
     /// </summary>
     public VeloxVoxBuilder WithTtsEngine(ITtsEngine ttsEngine)
     {
@@ -265,7 +261,7 @@ public sealed class VeloxVoxBuilder
     }
 
     /// <summary>
-    /// Specifies a custom audio queue implementation.
+    ///     Specifies a custom audio queue implementation.
     /// </summary>
     public VeloxVoxBuilder WithAudioQueue(IAudioQueue audioQueue)
     {
@@ -274,11 +270,11 @@ public sealed class VeloxVoxBuilder
     }
 
     /// <summary>
-    /// Asynchronously builds, initializes, and returns a new <see cref="VeloxVoxEngine"/> instance
-    /// based on the provided configuration.
+    ///     Asynchronously builds, initializes, and returns a new <see cref="VeloxVoxEngine" /> instance
+    ///     based on the provided configuration.
     /// </summary>
     /// <param name="ct">A cancellation token for the initialization process.</param>
-    /// <returns>A fully initialized and running <see cref="VeloxVoxEngine"/>.</returns>
+    /// <returns>A fully initialized and running <see cref="VeloxVoxEngine" />.</returns>
     public async Task<VeloxVoxEngine> BuildAsync(CancellationToken ct = default)
     {
         var player = _audioPlayer ?? new VlcAudioPlayer();
@@ -291,13 +287,12 @@ public sealed class VeloxVoxBuilder
     }
 }
 
-
 /// <summary>
-/// An asynchronous auto-reset event.
+///     An asynchronous auto-reset event.
 /// </summary>
 internal sealed class AsyncAutoResetEvent : IDisposable
 {
-    private readonly static Task _completed = Task.CompletedTask;
+    private static readonly Task _completed = Task.CompletedTask;
     private readonly Queue<TaskCompletionSource> _waiters = new();
     private bool _isSignaled;
 
@@ -312,7 +307,7 @@ internal sealed class AsyncAutoResetEvent : IDisposable
             }
 
             var tcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-            cancellationToken.Register(() => tcs.TrySetCanceled(), useSynchronizationContext: false);
+            cancellationToken.Register(() => tcs.TrySetCanceled(), false);
             _waiters.Enqueue(tcs);
             return tcs.Task;
         }
@@ -323,13 +318,8 @@ internal sealed class AsyncAutoResetEvent : IDisposable
         lock (_waiters)
         {
             if (_waiters.Count > 0)
-            {
                 _waiters.Dequeue().SetResult();
-            }
-            else if (!_isSignaled)
-            {
-                _isSignaled = true;
-            }
+            else if (!_isSignaled) _isSignaled = true;
         }
     }
 
@@ -338,12 +328,8 @@ internal sealed class AsyncAutoResetEvent : IDisposable
         // Cancel all pending waiters
         lock (_waiters)
         {
-            foreach (var waiter in _waiters)
-            {
-                waiter.TrySetCanceled();
-            }
+            foreach (var waiter in _waiters) waiter.TrySetCanceled();
             _waiters.Clear();
         }
     }
 }
-

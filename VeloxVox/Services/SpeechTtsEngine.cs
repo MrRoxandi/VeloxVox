@@ -6,7 +6,7 @@ using VeloxVox.Models;
 namespace VeloxVox.Services;
 
 /// <summary>
-/// A TTS engine implementation using the built-in System.Speech.Synthesis.
+///     A TTS engine implementation using the built-in System.Speech.Synthesis.
 /// </summary>
 [SupportedOSPlatform("windows")]
 internal sealed class SpeechTtsEngine : ITtsEngine
@@ -14,8 +14,9 @@ internal sealed class SpeechTtsEngine : ITtsEngine
     private SpeechSynthesizer? _synth = new();
     private bool _disposed;
 
-    /// <inheritdoc/>
-    public async ValueTask<string> SynthesizeToFileAsync(string text, TtsOptions options, CancellationToken ct = default)
+    /// <inheritdoc />
+    public async ValueTask<string> SynthesizeToFileAsync(string text, TtsOptions options,
+        CancellationToken ct = default)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         ct.ThrowIfCancellationRequested();
@@ -31,13 +32,14 @@ internal sealed class SpeechTtsEngine : ITtsEngine
             using var synthesizer = new SpeechSynthesizer();
 
             if (!string.IsNullOrWhiteSpace(options.VoiceName))
-            {
-                try { synthesizer.SelectVoice(options.VoiceName); }
+                try
+                {
+                    synthesizer.SelectVoice(options.VoiceName);
+                }
                 catch (ArgumentException)
                 {
                     // Voice may not exist; we'll proceed with the default voice.
                 }
-            }
 
             synthesizer.Rate = Math.Clamp(options.Rate, -10, 10);
             synthesizer.Volume = Math.Clamp(options.Volume, 0, 100);
@@ -53,7 +55,7 @@ internal sealed class SpeechTtsEngine : ITtsEngine
         }, ct).ConfigureAwait(false);
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public ValueTask DisposeAsync()
     {
         if (_disposed) return ValueTask.CompletedTask;
